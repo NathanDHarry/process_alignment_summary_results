@@ -111,7 +111,7 @@ plt.xticks(ticks=plt.xticks()[0], labels=["BAY", "LB", "SG"], fontsize=10)
 # Adjust legend to avoid duplication
 plt.legend([], [], frameon=False)  # Hide the stripplot legend if hue is repetitive
 
-# Save the plot in the directory containin the files.
+# Save the plot in the directory containing the files.
 output_path = r"C:\Users\ndhar\Downloads\popgen_reads_mapped_percent_boxplot.png"
 plt.savefig(output_path, dpi=300, bbox_inches='tight')
 
@@ -163,3 +163,33 @@ with open(output_path, "w") as f:
             row.append(outlier_lists[reference][i] if i < len(outlier_lists[reference]) else "")
         f.write("\t".join(row) + "\n")
 
+
+def create_mapping_percent_table(df):
+    """
+    Extract the MappingPercent attribute for each SampleName and tabularize the data.
+    Each SampleName gets one row and three columns (one for each Reference).
+    """
+    # Pivot the DataFrame to reshape data: SampleName as rows, Reference as columns, and MappedPercent as values
+    mapping_percent_table = df.pivot_table(
+        index="SampleName",  # Rows will be based on SampleName
+        columns="Reference",  # Columns will be based on Reference (bay, lb, sg)
+        values="MappedPercent",  # Values will be the MappedPercent
+        aggfunc="first"  # Use 'first' since each SampleName-Reference combination is unique
+    ).reset_index()  # Convert the index back into a column
+
+    # Rename the columns for clarity
+    mapping_percent_table.columns.name = None  # Remove MultiIndex column name
+    mapping_percent_table.rename(
+        columns={"bay": "Bay_MappedPercent", "lb": "LB_MappedPercent", "sg": "SG_MappedPercent"},
+        inplace=True
+    )
+
+    return mapping_percent_table
+
+
+# Call the function and save the result
+mapping_percent_table = create_mapping_percent_table(summary_df)
+
+# Save the tabularized DataFrame to a new .tsv file
+output_path = r"C:\Users\ndhar\Downloads\popgen_mapping_percent_table.tsv"
+mapping_percent_table.to_csv(output_path, sep="\t", index=False)
